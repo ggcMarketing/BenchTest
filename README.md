@@ -103,25 +103,30 @@ parx-mvp/
 
 ### Option 2: Docker Deployment
 
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd BenchTest
-   ```
+**Development Mode** (with hot reload):
+```bash
+docker-compose up -d
+```
 
-2. **Start with Docker Compose**
-   ```bash
-   docker-compose up --build
-   ```
+Access:
+- Frontend: http://localhost:5173
+- Backend API: http://localhost:3001/api
 
-3. **Access the application**
-   - Frontend: http://localhost:5173
-   - Backend API: http://localhost:3001
+**Production Mode** (optimized build):
+```bash
+docker-compose -f docker-compose.prod.yml up -d
+```
 
-4. **Stop the application**
-   ```bash
-   docker-compose down
-   ```
+Access:
+- Frontend: http://localhost (port 80)
+- Backend API: http://localhost:3001/api
+
+**Stop services**:
+```bash
+docker-compose down
+```
+
+📖 **For detailed deployment instructions, troubleshooting, and cloud deployment guides, see [DEPLOYMENT.md](DEPLOYMENT.md)**
 
 ## Default User Credentials
 
