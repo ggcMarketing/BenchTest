@@ -3,6 +3,9 @@ from fastapi.middleware.cors import CORSMiddleware
 import os
 import logging
 
+from .database import db
+from .routes import analytics, derived, batches, export_routes
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -26,15 +29,41 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.on_event("startup")
+async def startup_event():
+    """Initialize database connections on startup"""
+    db.initialize()
+    logger.info("Analytics Engine started")
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Close database connections on shutdown"""
+    db.close()
+    logger.info("Analytics Engine stopped")
+
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
-    return {
-        "status": "ok",
-        "service": "analytics-engine",
-        "version": "1.2.1",
-        "timestamp": int(os.times().elapsed * 1000)
-    }
+    try:
+        conn = db.get_timescale_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT 1")
+        cursor.close()
+        db.return_timescale_connection(conn)
+        
+        return {
+            "status": "ok",
+            "service": "analytics-engine",
+            "version": "1.2.1",
+            "database": "connected"
+        }
+    except Exception as e:
+        logger.error(f"Health check failed: {e}")
+        return {
+            "status": "error",
+            "service": "analytics-engine",
+            "message": str(e)
+        }
 
 @app.get("/api/v1")
 async def api_info():
@@ -49,6 +78,12 @@ async def api_info():
             "export": "/api/v1/analytics/export"
         }
     }
+
+# Mount routes
+app.include_router(analytics.router, prefix="/api/v1/analytics", tags=["analytics"])
+app.include_router(derived.router, prefix="/api/v1/analytics/derived", tags=["derived"])
+app.include_router(batches.router, prefix="/api/v1/analytics/batches", tags=["batches"])
+app.include_router(export_routes.router, prefix="/api/v1/analytics/export", tags=["export"])
 
 if __name__ == "__main__":
     import uvicorn
