@@ -480,7 +480,7 @@ This document outlines the phased implementation approach for ParX v1.2.1, break
 ## Questions for Decision
 
 1. **Protocol Priority**: Which protocols should be implemented first?
-   - Recommendation: Modbus TCP → EtherNet/IP → OPC UA → MQTT → EGD
+   - Recommendation: Modbus TCP → EGD → OPC UA → MQTT → EtherNet/IP  
 
 2. **Storage Backend**: Primary storage for production?
    - Recommendation: TimescaleDB (PostgreSQL-based, easier ops)

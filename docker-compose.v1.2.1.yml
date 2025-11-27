@@ -1,0 +1,306 @@
+version: '3.8'
+
+services:
+  # ============================================================================
+  # DATABASES
+  # ============================================================================
+  
+  postgres:
+    image: postgres:15-alpine
+    container_name: parx-postgres
+    environment:
+      POSTGRES_DB: parx
+      POSTGRES_USER: parx
+      POSTGRES_PASSWORD: parx
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U parx"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - parx-network
+
+  timescaledb:
+    image: timescale/timescaledb:latest-pg15
+    container_name: parx-timescaledb
+    environment:
+      POSTGRES_DB: parx_timeseries
+      POSTGRES_USER: parx
+      POSTGRES_PASSWORD: parx
+    ports:
+      - "5433:5432"
+    volumes:
+      - timescaledb-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U parx"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - parx-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: parx-redis
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - parx-network
+
+  # ============================================================================
+  # BACKEND SERVICES
+  # ============================================================================
+
+  admin-api:
+    build:
+      context: ./services/admin-api
+      dockerfile: Dockerfile
+    container_name: parx-admin-api
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=parx
+      - DB_USER=parx
+      - DB_PASSWORD=parx
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=your-secret-key-change-in-production
+      - JWT_EXPIRES_IN=15m
+      - JWT_REFRESH_EXPIRES_IN=7d
+      - LOG_LEVEL=info
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./services/admin-api:/app
+      - /app/node_modules
+      - ./shared:/app/shared
+      - ./logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - parx-network
+
+  data-router:
+    build:
+      context: ./services/data-router
+      dockerfile: Dockerfile
+    container_name: parx-data-router
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=your-secret-key-change-in-production
+      - LOG_LEVEL=info
+      - MAX_CONNECTIONS=1000
+      - RATE_LIMIT_PER_MINUTE=1000
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./services/data-router:/app
+      - /app/node_modules
+      - ./shared:/app/shared
+      - ./logs:/app/logs
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - parx-network
+
+  collector:
+    build:
+      context: ./services/collector
+      dockerfile: Dockerfile
+    container_name: parx-collector
+    environment:
+      - NODE_ENV=development
+      - PORT=3002
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=parx
+      - DB_USER=parx
+      - DB_PASSWORD=parx
+      - REDIS_URL=redis://redis:6379
+      - DATA_ROUTER_URL=http://data-router:3001
+      - LOG_LEVEL=info
+    ports:
+      - "3002:3002"
+    volumes:
+      - ./services/collector:/app
+      - /app/node_modules
+      - ./shared:/app/shared
+      - ./logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      data-router:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - parx-network
+
+  storage-engine:
+    build:
+      context: ./services/storage-engine
+      dockerfile: Dockerfile
+    container_name: parx-storage-engine
+    environment:
+      - NODE_ENV=development
+      - PORT=3003
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=parx
+      - DB_USER=parx
+      - DB_PASSWORD=parx
+      - TIMESCALE_HOST=timescaledb
+      - TIMESCALE_PORT=5432
+      - TIMESCALE_DB=parx_timeseries
+      - TIMESCALE_USER=parx
+      - TIMESCALE_PASSWORD=parx
+      - REDIS_URL=redis://redis:6379
+      - FILE_STORAGE_PATH=/data/files
+      - LOG_LEVEL=info
+    ports:
+      - "3003:3003"
+    volumes:
+      - ./services/storage-engine:/app
+      - /app/node_modules
+      - ./shared:/app/shared
+      - ./logs:/app/logs
+      - storage-files:/data/files
+    depends_on:
+      postgres:
+        condition: service_healthy
+      timescaledb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - parx-network
+
+  analytics-engine:
+    build:
+      context: ./services/analytics-engine
+      dockerfile: Dockerfile
+    container_name: parx-analytics-engine
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PORT=3004
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=parx
+      - DB_USER=parx
+      - DB_PASSWORD=parx
+      - TIMESCALE_HOST=timescaledb
+      - TIMESCALE_PORT=5432
+      - TIMESCALE_DB=parx_timeseries
+      - TIMESCALE_USER=parx
+      - TIMESCALE_PASSWORD=parx
+      - REDIS_URL=redis://redis:6379
+      - LOG_LEVEL=info
+    ports:
+      - "3004:3004"
+    volumes:
+      - ./services/analytics-engine:/app
+      - ./logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      timescaledb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - parx-network
+
+  # ============================================================================
+  # FRONTEND
+  # ============================================================================
+
+  frontend:
+    build:
+      context: ./frontend-v2
+      dockerfile: Dockerfile
+    container_name: parx-frontend
+    environment:
+      - VITE_ADMIN_API_URL=http://localhost:3000
+      - VITE_DATA_ROUTER_URL=http://localhost:3001
+      - VITE_ANALYTICS_API_URL=http://localhost:3004
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend-v2:/app
+      - /app/node_modules
+    depends_on:
+      - admin-api
+      - data-router
+      - analytics-engine
+    restart: unless-stopped
+    networks:
+      - parx-network
+
+  # ============================================================================
+  # UTILITIES
+  # ============================================================================
+
+  migration:
+    build:
+      context: ./database
+      dockerfile: Dockerfile
+    container_name: parx-migration
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=parx
+      - DB_USER=parx
+      - DB_PASSWORD=parx
+    volumes:
+      - ./database:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      timescaledb:
+        condition: service_healthy
+    networks:
+      - parx-network
+    profiles:
+      - tools
+
+# ============================================================================
+# NETWORKS
+# ============================================================================
+
+networks:
+  parx-network:
+    driver: bridge
+
+# ============================================================================
+# VOLUMES
+# ============================================================================
+
+volumes:
+  postgres-data:
+  timescaledb-data:
+  redis-data:
+  storage-files:
