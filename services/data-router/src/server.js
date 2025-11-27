@@ -24,16 +24,60 @@ const io = new Server(server, {
   cors: {
     origin: '*',
     methods: ['GET', 'POST']
-  }
+  },
+  maxHttpBufferSize: 1e6,
+  pingTimeout: 60000,
+  pingInterval: 25000
 });
 
 // Track active subscriptions
-const subscriptions = new Map();
+const subscriptions = new Map(); // Map<channelId, Set<socketId>>
+let redis = null;
+let redisSubscriber = null;
+
+// Initialize Redis subscriber
+async function initializeRedisSubscriber() {
+  try {
+    redis = await getRedisClient();
+    redisSubscriber = redis.duplicate();
+    await redisSubscriber.connect();
+
+    // Subscribe to channel updates from collector
+    await redisSubscriber.subscribe('channel:updates', (message) => {
+      try {
+        const data = JSON.parse(message);
+        
+        // Broadcast to subscribed clients
+        const subs = subscriptions.get(data.channelId);
+        if (subs && subs.size > 0) {
+          io.to(`channel:${data.channelId}`).emit('channelUpdate', data);
+          logger.debug(`Broadcasted update for ${data.channelId} to ${subs.size} client(s)`);
+        }
+      } catch (error) {
+        logger.error('Error processing channel update:', error);
+      }
+    });
+
+    // Subscribe to alarms
+    await redisSubscriber.subscribe('alarms', (message) => {
+      try {
+        const alarm = JSON.parse(message);
+        io.emit('alarm', alarm);
+        logger.debug('Broadcasted alarm');
+      } catch (error) {
+        logger.error('Error processing alarm:', error);
+      }
+    });
+
+    logger.info('Redis subscriber initialized');
+  } catch (error) {
+    logger.error('Error initializing Redis subscriber:', error);
+  }
+}
 
 // Health check endpoint
 app.get('/health', async (req, res) => {
   try {
-    const redis = await getRedisClient();
     await redis.ping();
     
     res.json({
@@ -53,24 +97,61 @@ app.get('/health', async (req, res) => {
   }
 });
 
+// Get current value for a channel
+app.get('/channels/:channelId/value', async (req, res) => {
+  try {
+    const { channelId } = req.params;
+    const value = await redis.get(`live:${channelId}`);
+    
+    if (!value) {
+      return res.status(404).json({
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Channel not found or no data available'
+        }
+      });
+    }
+
+    res.json(JSON.parse(value));
+  } catch (error) {
+    logger.error('Error getting channel value:', error);
+    res.status(500).json({
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: error.message
+      }
+    });
+  }
+});
+
 // WebSocket connection handling
 io.on('connection', (socket) => {
   logger.info(`Client connected: ${socket.id}`);
   
-  socket.on('subscribe', ({ channels }) => {
-    logger.info(`Socket ${socket.id} subscribing to ${channels.length} channels`);
+  socket.on('subscribe', async ({ channels }) => {
+    logger.info(`Socket ${socket.id} subscribing to ${channels.length} channel(s)`);
     
-    channels.forEach(channelId => {
+    for (const channelId of channels) {
       if (!subscriptions.has(channelId)) {
         subscriptions.set(channelId, new Set());
       }
       subscriptions.get(channelId).add(socket.id);
       socket.join(`channel:${channelId}`);
-    });
+
+      // Send current value immediately
+      try {
+        const value = await redis.get(`live:${channelId}`);
+        if (value) {
+          socket.emit('channelUpdate', JSON.parse(value));
+        }
+      } catch (error) {
+        logger.error(`Error sending initial value for ${channelId}:`, error);
+      }
+    }
   });
   
   socket.on('unsubscribe', ({ channels }) => {
-    logger.info(`Socket ${socket.id} unsubscribing from ${channels.length} channels`);
+    logger.info(`Socket ${socket.id} unsubscribing from ${channels.length} channel(s)`);
     
     channels.forEach(channelId => {
       const subs = subscriptions.get(channelId);
@@ -98,14 +179,20 @@ io.on('connection', (socket) => {
 });
 
 // Start server
-server.listen(PORT, () => {
+server.listen(PORT, async () => {
   logger.info(`Data Router listening on port ${PORT}`);
   logger.info(`WebSocket server ready`);
+  await initializeRedisSubscriber();
 });
 
 // Graceful shutdown
-process.on('SIGTERM', async () => {
-  logger.info('SIGTERM received, shutting down gracefully');
+async function shutdown() {
+  logger.info('Shutting down gracefully...');
+  
+  if (redisSubscriber) {
+    await redisSubscriber.quit();
+  }
+  
   io.close(() => {
     server.close(async () => {
       await closeRedisClient();
@@ -113,4 +200,7 @@ process.on('SIGTERM', async () => {
       process.exit(0);
     });
   });
-});
+}
+
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);
