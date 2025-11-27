@@ -5,6 +5,12 @@ import { createLogger } from '../../../shared/utils/logger.js';
 import { getDbPool, closeDbPool } from '../../../shared/utils/db-client.js';
 import { getRedisClient, closeRedisClient } from '../../../shared/utils/redis-client.js';
 
+// Import routes
+import authRoutes from './routes/auth.js';
+import channelsRoutes from './routes/channels.js';
+import storageRulesRoutes from './routes/storage-rules.js';
+import dashboardsRoutes from './routes/dashboards.js';
+
 dotenv.config();
 
 const app = express();
@@ -14,6 +20,12 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Request logging
+app.use((req, res, next) => {
+  logger.debug(`${req.method} ${req.path}`);
+  next();
+});
 
 // Health check endpoint
 app.get('/health', async (req, res) => {
@@ -39,7 +51,7 @@ app.get('/health', async (req, res) => {
   }
 });
 
-// API routes placeholder
+// API info endpoint
 app.get('/api/v1', (req, res) => {
   res.json({
     service: 'ParX Admin API',
@@ -50,6 +62,22 @@ app.get('/api/v1', (req, res) => {
       storageRules: '/api/v1/storage/rules',
       dashboards: '/api/v1/dashboards',
       users: '/api/v1/users'
+    }
+  });
+});
+
+// Mount routes
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/io/channels', channelsRoutes);
+app.use('/api/v1/storage/rules', storageRulesRoutes);
+app.use('/api/v1/dashboards', dashboardsRoutes);
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({
+    error: {
+      code: 'NOT_FOUND',
+      message: 'Endpoint not found'
     }
   });
 });
@@ -68,6 +96,7 @@ app.use((err, req, res, next) => {
 // Start server
 const server = app.listen(PORT, () => {
   logger.info(`Admin API listening on port ${PORT}`);
+  logger.info('Routes mounted: auth, channels, storage-rules, dashboards');
 });
 
 // Graceful shutdown
