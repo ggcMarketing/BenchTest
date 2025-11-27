@@ -17,7 +17,7 @@ A production-ready MVP for industrial process monitoring and analytics, featurin
 ### Backend
 - Node.js + Express
 - Socket.io (WebSocket server)
-- SQLite (better-sqlite3)
+- SQLite (sqlite3)
 - Mock OPC UA data generator
 
 ### Frontend

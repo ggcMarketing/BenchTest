@@ -40,6 +40,25 @@ const activeSubscriptions = new Map();
 const tagIntervals = new Map();
 
 // REST API endpoints
+app.get('/api', (req, res) => {
+  res.json({
+    name: 'ParX Industrial Analytics API',
+    version: '1.0.0',
+    endpoints: {
+      health: '/api/health',
+      tags: '/api/tags',
+      tagsList: '/api/tags/list',
+      coils: '/api/coils',
+      coilById: '/api/coils/:coilId',
+      profile: '/api/profile/:coilId',
+      historical: '/api/historical/:tagPath',
+      login: '/api/auth/login',
+      alarms: '/api/alarms',
+      currentCoil: '/api/coil/current'
+    }
+  });
+});
+
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: Date.now() });
 });
@@ -56,20 +75,28 @@ app.get('/api/tags/list', (req, res) => {
   res.json({ tags });
 });
 
-app.get('/api/coils', (req, res) => {
-  const coils = getCoils();
-  res.json({ coils });
+app.get('/api/coils', async (req, res) => {
+  try {
+    const coils = await getCoils();
+    res.json({ coils });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
-app.get('/api/coils/:coilId', (req, res) => {
-  const coils = getCoils();
-  const coil = coils.find(c => c.id === req.params.coilId);
+app.get('/api/coils/:coilId', async (req, res) => {
+  try {
+    const coils = await getCoils();
+    const coil = coils.find(c => c.id === req.params.coilId);
 
-  if (!coil) {
-    return res.status(404).json({ error: 'Coil not found' });
+    if (!coil) {
+      return res.status(404).json({ error: 'Coil not found' });
+    }
+
+    res.json(coil);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
-
-  res.json(coil);
 });
 
 app.get('/api/profile/:coilId', (req, res) => {
@@ -81,43 +108,55 @@ app.get('/api/profile/:coilId', (req, res) => {
   });
 });
 
-app.get('/api/historical/:tagPath', (req, res) => {
-  const tagPath = decodeURIComponent(req.params.tagPath);
-  const startTime = parseInt(req.query.start) || Date.now() - 3600000;
-  const endTime = parseInt(req.query.end) || Date.now();
-  const limit = parseInt(req.query.limit) || 1000;
+app.get('/api/historical/:tagPath', async (req, res) => {
+  try {
+    const tagPath = decodeURIComponent(req.params.tagPath);
+    const startTime = parseInt(req.query.start) || Date.now() - 3600000;
+    const endTime = parseInt(req.query.end) || Date.now();
+    const limit = parseInt(req.query.limit) || 1000;
 
-  const data = getHistoricalData(tagPath, startTime, endTime, limit);
-  res.json({ data });
+    const data = await getHistoricalData(tagPath, startTime, endTime, limit);
+    res.json({ data });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
-app.post('/api/auth/login', (req, res) => {
-  const { username, password } = req.body;
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { username, password } = req.body;
 
-  if (!username || !password) {
-    return res.status(400).json({ error: 'Username and password required' });
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Username and password required' });
+    }
+
+    const user = await authenticateUser(username, password);
+
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    res.json({
+      user: {
+        id: user.id,
+        username: user.username,
+        role: user.role,
+        name: user.name
+      },
+      token: `mock-token-${user.id}-${Date.now()}`
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
-
-  const user = authenticateUser(username, password);
-
-  if (!user) {
-    return res.status(401).json({ error: 'Invalid credentials' });
-  }
-
-  res.json({
-    user: {
-      id: user.id,
-      username: user.username,
-      role: user.role,
-      name: user.name
-    },
-    token: `mock-token-${user.id}-${Date.now()}`
-  });
 });
 
-app.get('/api/alarms', (req, res) => {
-  const alarms = getActiveAlarms();
-  res.json({ alarms });
+app.get('/api/alarms', async (req, res) => {
+  try {
+    const alarms = await getActiveAlarms();
+    res.json({ alarms });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 app.get('/api/coil/current', (req, res) => {
