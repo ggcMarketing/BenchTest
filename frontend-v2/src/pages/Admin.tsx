@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Settings, Database, HardDrive, Users, Activity } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
-import ChannelConfig from '../components/admin/ChannelConfig'
+import ChannelTreeView from '../components/admin/ChannelTreeView'
 import StorageConfig from '../components/admin/StorageConfig'
 import UserManagement from '../components/admin/UserManagement'
 import SystemMonitoring from '../components/admin/SystemMonitoring'
@@ -79,7 +79,7 @@ export default function Admin() {
 
       <main className="p-6">
         {activeTab === 'monitoring' && <SystemMonitoring />}
-        {activeTab === 'channels' && <ChannelConfig />}
+        {activeTab === 'channels' && <ChannelTreeView />}
         {activeTab === 'storage' && <StorageConfig />}
         {activeTab === 'users' && <UserManagement />}
       </main>

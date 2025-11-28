@@ -7,6 +7,8 @@ import { getRedisClient, closeRedisClient } from '../../../shared/utils/redis-cl
 
 // Import routes
 import authRoutes from './routes/auth.js';
+import interfacesRoutes from './routes/interfaces.js';
+import connectionsRoutes from './routes/connections.js';
 import channelsRoutes from './routes/channels.js';
 import storageRulesRoutes from './routes/storage-rules.js';
 import dashboardsRoutes from './routes/dashboards.js';
@@ -68,6 +70,8 @@ app.get('/api/v1', (req, res) => {
 
 // Mount routes
 app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/io/interfaces', interfacesRoutes);
+app.use('/api/v1/io/connections', connectionsRoutes);
 app.use('/api/v1/io/channels', channelsRoutes);
 app.use('/api/v1/storage/rules', storageRulesRoutes);
 app.use('/api/v1/dashboards', dashboardsRoutes);
