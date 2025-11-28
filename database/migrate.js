@@ -62,7 +62,37 @@ async function runMigration(filename) {
   console.log(`Running migration: ${filename}`);
   
   try {
-    await pool.query(sql);
+    // For TimescaleDB migrations, split into statements
+    // For regular migrations, run as a single transaction
+    if (filename.includes('timescaledb')) {
+      // Remove comments and split SQL into individual statements
+      const cleanSql = sql
+        .split('\n')
+        .filter(line => !line.trim().startsWith('--'))
+        .join('\n');
+      
+      const statements = cleanSql
+        .split(';')
+        .map(s => s.trim())
+        .filter(s => s.length > 10); // Filter out empty or very short statements
+      
+      // Execute each statement separately
+      for (let i = 0; i < statements.length; i++) {
+        const statement = statements[i];
+        if (statement) {
+          try {
+            await pool.query(statement + ';');
+          } catch (error) {
+            console.error(`Statement ${i + 1} failed:`, statement.substring(0, 150) + '...');
+            throw error;
+          }
+        }
+      }
+    } else {
+      // Run regular migrations in a single query
+      await pool.query(sql);
+    }
+    
     await markMigrationExecuted(filename);
     console.log(`✓ Migration ${filename} completed successfully`);
   } catch (error) {
