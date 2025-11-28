@@ -1,0 +1,17 @@
+{
+  "name": "@parx/shared",
+  "version": "1.2.1",
+  "type": "module",
+  "description": "Shared utilities for ParX microservices",
+  "main": "index.js",
+  "exports": {
+    "./utils/logger": "./utils/logger.js",
+    "./utils/db-client": "./utils/db-client.js",
+    "./utils/redis-client": "./utils/redis-client.js"
+  },
+  "dependencies": {
+    "winston": "^3.11.0",
+    "pg": "^8.11.3",
+    "redis": "^4.6.11"
+  }
+}

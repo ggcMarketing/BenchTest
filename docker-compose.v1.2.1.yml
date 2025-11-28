@@ -86,7 +86,8 @@ services:
     volumes:
       - ./services/admin-api:/app
       - /app/node_modules
-      - ./shared:/app/shared
+      - ./shared:/shared
+      - ./shared/node_modules:/shared/node_modules
       - ./logs:/app/logs
     depends_on:
       postgres:
@@ -115,7 +116,7 @@ services:
     volumes:
       - ./services/data-router:/app
       - /app/node_modules
-      - ./shared:/app/shared
+      - ./shared:/shared
       - ./logs:/app/logs
     depends_on:
       redis:
@@ -145,7 +146,7 @@ services:
     volumes:
       - ./services/collector:/app
       - /app/node_modules
-      - ./shared:/app/shared
+      - ./shared:/shared
       - ./logs:/app/logs
     depends_on:
       postgres:
@@ -184,7 +185,7 @@ services:
     volumes:
       - ./services/storage-engine:/app
       - /app/node_modules
-      - ./shared:/app/shared
+      - ./shared:/shared
       - ./logs:/app/logs
       - storage-files:/data/files
     depends_on:
