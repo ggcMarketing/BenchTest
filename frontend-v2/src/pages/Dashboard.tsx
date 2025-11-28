@@ -56,6 +56,15 @@ export default function Dashboard() {
               <Settings size={16} />
               <span>Analytics</span>
             </button>
+            {(user?.role === 'admin' || user?.role === 'engineer') && (
+              <button
+                onClick={() => navigate('/admin')}
+                className="flex items-center space-x-2 px-3 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-md text-sm"
+              >
+                <Settings size={16} />
+                <span>Admin</span>
+              </button>
+            )}
             <button
               onClick={() => navigate('/builder')}
               className="flex items-center space-x-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm"

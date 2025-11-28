@@ -4,6 +4,7 @@ import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import DashboardBuilder from './pages/DashboardBuilder'
 import Analytics from './pages/Analytics'
+import Admin from './pages/Admin'
 
 function App() {
   const { isAuthenticated } = useAuthStore()
@@ -22,6 +23,10 @@ function App() {
       <Route
         path="/analytics"
         element={isAuthenticated ? <Analytics /> : <Navigate to="/login" />}
+      />
+      <Route
+        path="/admin"
+        element={isAuthenticated ? <Admin /> : <Navigate to="/login" />}
       />
       <Route path="/" element={<Navigate to="/dashboard" />} />
     </Routes>
