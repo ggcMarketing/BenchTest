@@ -35,15 +35,16 @@ export default function AddModuleDialog({ type, parentId, onClose, onSuccess }: 
       if (type === 'interface') {
         // Generate ID from name
         data.id = formData.name.toLowerCase().replace(/[^a-z0-9]/g, '-')
-        endpoint = `${API_URL}/api/v1/interfaces`
+        endpoint = `${API_URL}/api/v1/io/interfaces`
       } else if (type === 'connection') {
         data.id = `${parentId}.${formData.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`
         data.interface_id = parentId
-        endpoint = `${API_URL}/api/v1/connections`
+        endpoint = `${API_URL}/api/v1/io/connections`
       } else if (type === 'channel') {
         data.id = `${parentId}.${formData.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`
         data.connection_id = parentId
-        endpoint = `${API_URL}/api/v1/channels`
+        data.protocol = 'modbus' // Default protocol, will be inherited from connection
+        endpoint = `${API_URL}/api/v1/io/channels`
       }
 
       await axios.post(endpoint, data)

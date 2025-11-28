@@ -40,11 +40,11 @@ export default function GeneralTab({ module, moduleType, onUpdate }: Props) {
     try {
       let endpoint = ''
       if (moduleType === 'interface') {
-        endpoint = `${API_URL}/api/v1/interfaces/${module.id}`
+        endpoint = `${API_URL}/api/v1/io/interfaces/${module.id}`
       } else if (moduleType === 'connection') {
-        endpoint = `${API_URL}/api/v1/connections/${module.id}`
+        endpoint = `${API_URL}/api/v1/io/connections/${module.id}`
       } else if (moduleType === 'channel') {
-        endpoint = `${API_URL}/api/v1/channels/${module.id}`
+        endpoint = `${API_URL}/api/v1/io/channels/${module.id}`
       }
 
       await axios.put(endpoint, formData)

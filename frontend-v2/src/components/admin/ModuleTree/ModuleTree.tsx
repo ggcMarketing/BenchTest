@@ -29,14 +29,15 @@ export default function ModuleTree({ onSelect, selectedId }: Props) {
   const loadData = async () => {
     try {
       const [interfacesRes, connectionsRes, channelsRes] = await Promise.all([
-        axios.get(`${API_URL}/api/v1/interfaces`),
-        axios.get(`${API_URL}/api/v1/connections`),
-        axios.get(`${API_URL}/api/v1/channels`)
+        axios.get(`${API_URL}/api/v1/io/interfaces`),
+        axios.get(`${API_URL}/api/v1/io/connections`),
+        axios.get(`${API_URL}/api/v1/io/channels`)
       ])
       
-      setInterfaces(interfacesRes.data)
-      setConnections(connectionsRes.data)
-      setChannels(channelsRes.data)
+      // Handle both array and object responses
+      setInterfaces(Array.isArray(interfacesRes.data) ? interfacesRes.data : interfacesRes.data.interfaces || [])
+      setConnections(Array.isArray(connectionsRes.data) ? connectionsRes.data : connectionsRes.data.connections || [])
+      setChannels(Array.isArray(channelsRes.data) ? channelsRes.data : channelsRes.data.channels || [])
     } catch (error) {
       console.error('Error loading data:', error)
     } finally {

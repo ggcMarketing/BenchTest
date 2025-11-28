@@ -27,10 +27,10 @@ export default function DiagnosticsTab({ module, moduleType }: Props) {
     try {
       let endpoint = ''
       if (moduleType === 'connection') {
-        endpoint = `${API_URL}/api/v1/connections/${module.id}/diagnostics`
+        endpoint = `${API_URL}/api/v1/io/connections/${module.id}/diagnostics`
       } else {
         // For interfaces and channels, show basic status
-        endpoint = `${API_URL}/api/v1/channels?${moduleType}_id=${module.id}`
+        endpoint = `${API_URL}/api/v1/io/channels?${moduleType}_id=${module.id}`
       }
       
       const response = await axios.get(endpoint)

@@ -42,7 +42,7 @@ export default function ConnectionTab({ module, onUpdate }: Props) {
 
     try {
       const response = await axios.post(
-        `${API_URL}/api/v1/connections/${module.id}/test`,
+        `${API_URL}/api/v1/io/connections/${module.id}/test`,
         config
       )
       
@@ -67,7 +67,7 @@ export default function ConnectionTab({ module, onUpdate }: Props) {
     setSuccess(false)
 
     try {
-      await axios.put(`${API_URL}/api/v1/connections/${module.id}`, {
+      await axios.put(`${API_URL}/api/v1/io/connections/${module.id}`, {
         ...module,
         config
       })

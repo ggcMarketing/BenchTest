@@ -19,7 +19,7 @@ export default function DigitalInputsTab({ connection }: Props) {
 
   const loadChannels = async () => {
     try {
-      const response = await axios.get(`${API_URL}/api/v1/channels?connection_id=${connection.id}`)
+      const response = await axios.get(`${API_URL}/api/v1/io/channels?connection_id=${connection.id}`)
       const digitalChannels = response.data.filter((ch: any) => 
         ch.metadata?.channel_type === 'digital' || ch.config?.dataType === 'bool'
       )
