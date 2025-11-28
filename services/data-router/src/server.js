@@ -42,19 +42,19 @@ async function initializeRedisSubscriber() {
     redisSubscriber = redis.duplicate();
     await redisSubscriber.connect();
 
-    // Subscribe to channel updates from collector
-    await redisSubscriber.subscribe('channel:updates', (message) => {
+    // Subscribe to raw data from collector
+    await redisSubscriber.subscribe('data:raw', (message) => {
       try {
         const data = JSON.parse(message);
         
         // Broadcast to subscribed clients
         const subs = subscriptions.get(data.channelId);
         if (subs && subs.size > 0) {
-          io.to(`channel:${data.channelId}`).emit('channelUpdate', data);
+          io.to(`channel:${data.channelId}`).emit('tagUpdate', data);
           logger.debug(`Broadcasted update for ${data.channelId} to ${subs.size} client(s)`);
         }
       } catch (error) {
-        logger.error('Error processing channel update:', error);
+        logger.error('Error processing data update:', error);
       }
     });
 
@@ -142,7 +142,11 @@ io.on('connection', (socket) => {
       try {
         const value = await redis.get(`live:${channelId}`);
         if (value) {
-          socket.emit('channelUpdate', JSON.parse(value));
+          const data = JSON.parse(value);
+          socket.emit('tagUpdate', {
+            channelId,
+            ...data
+          });
         }
       } catch (error) {
         logger.error(`Error sending initial value for ${channelId}:`, error);

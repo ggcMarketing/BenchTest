@@ -151,9 +151,9 @@ export class CollectorManager {
         })
       );
 
-      // Publish to Redis pub/sub for Data Router
+      // Publish to Redis pub/sub for Data Router and Storage Engine
       await this.redis.publish(
-        'channel:updates',
+        'data:raw',
         JSON.stringify(data)
       );
 

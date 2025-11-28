@@ -39,8 +39,8 @@ export class StorageManager {
       this.redisSubscriber = this.redis.duplicate();
       await this.redisSubscriber.connect();
 
-      // Subscribe to channel updates
-      await this.redisSubscriber.subscribe('channel:updates', (message) => {
+      // Subscribe to raw data from collector
+      await this.redisSubscriber.subscribe('data:raw', (message) => {
         this.handleChannelUpdate(message);
       });
 

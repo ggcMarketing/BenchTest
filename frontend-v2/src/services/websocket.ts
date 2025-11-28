@@ -29,6 +29,14 @@ class WebSocketService {
       console.log('WebSocket disconnected')
     })
 
+    this.socket.on('tagUpdate', (data: any) => {
+      const callbacks = this.subscribers.get(data.channelId)
+      if (callbacks) {
+        callbacks.forEach((callback) => callback(data))
+      }
+    })
+    
+    // Also listen for legacy channelUpdate event for backward compatibility
     this.socket.on('channelUpdate', (data: any) => {
       const callbacks = this.subscribers.get(data.channelId)
       if (callbacks) {
