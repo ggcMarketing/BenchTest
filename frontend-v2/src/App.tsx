@@ -6,8 +6,10 @@ import DashboardBuilder from './pages/DashboardBuilder'
 import Analytics from './pages/Analytics'
 import Admin from './pages/Admin'
 
+
 function App() {
-  const { isAuthenticated } = useAuthStore()
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+
 
   // Debug: Check what Vite is loading from .env
   console.log("ENV DUMP EXACT:", JSON.stringify(import.meta.env, null, 2))

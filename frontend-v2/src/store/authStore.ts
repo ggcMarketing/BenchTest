@@ -2,12 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import axios from 'axios'
 
-// Temporarily hardcoded until we resolve the .env loading issue
-const API_URL = 'http://localhost:3000/api/v1'
-// const API_URL = import.meta.env.VITE_ADMIN_API_URL || 'http://localhost:3000/api/v1'
-
-console.log('Auth Store API_URL:', API_URL)
-console.log('Environment variables:', import.meta.env)
+const API_URL =  import.meta.env.VITE_ADMIN_API_URL || 'http://localhost:3000/api/v1'
 
 interface User {
   id: number
