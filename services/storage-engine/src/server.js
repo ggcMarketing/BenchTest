@@ -100,9 +100,35 @@ app.post('/query', async (req, res) => {
   }
 });
 
+// Initialize database connection
+async function initializeDatabase() {
+  try {
+    const db = getDbPool();
+    await db.query('SELECT 1');
+    logger.info('Database connection established');
+  } catch (error) {
+    logger.error('Failed to connect to database:', error);
+    process.exit(1);
+  }
+}
+
+// Initialize Redis connection
+async function initializeRedis() {
+  try {
+    const redis = await getRedisClient();
+    await redis.ping();
+    logger.info('Redis connection established');
+  } catch (error) {
+    logger.error('Failed to connect to Redis:', error);
+    process.exit(1);
+  }
+}
+
 // Initialize services
 async function initialize() {
   try {
+    await initializeDatabase();
+    await initializeRedis();
     await storageManager.initialize();
     logger.info('Storage engine initialized');
   } catch (error) {

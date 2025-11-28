@@ -21,8 +21,9 @@ COPY ./services/collector/package*.json ./
 # Install dependencies
 RUN npm install --omit=dev
 
-# Copy application files
-COPY ./services/collector .
+# Copy application files (excluding node_modules)
+COPY ./services/collector/src ./src
+COPY ./services/collector/Dockerfile ./Dockerfile
 
 # Create logs directory
 RUN mkdir -p /app/logs

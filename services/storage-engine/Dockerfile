@@ -18,8 +18,9 @@ COPY ./services/storage-engine/package*.json ./
 # Install dependencies
 RUN npm install --omit=dev
 
-# Copy application files
-COPY ./services/storage-engine .
+# Copy application files (excluding node_modules)
+COPY ./services/storage-engine/src ./src
+COPY ./services/storage-engine/Dockerfile ./Dockerfile
 
 # Create logs and data directories
 RUN mkdir -p /app/logs /data/files
