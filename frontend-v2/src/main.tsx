@@ -5,8 +5,6 @@ import App from './App'
 import './index.css'
 import './store/authStore'
 
-console.log(">>> MAIN FILE LOADED <<<")
-
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
