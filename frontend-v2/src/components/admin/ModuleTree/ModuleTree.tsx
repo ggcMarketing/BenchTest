@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { ChevronRight, ChevronDown, Plus, Wifi, WifiOff } from 'lucide-react'
 import axios from 'axios'
+import AddModuleDialog from './AddModuleDialog'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
@@ -17,6 +18,9 @@ export default function ModuleTree({ onSelect, selectedId }: Props) {
   const [connections, setConnections] = useState<any[]>([])
   const [channels, setChannels] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [showAddDialog, setShowAddDialog] = useState(false)
+  const [addDialogType, setAddDialogType] = useState<'interface' | 'connection' | 'channel'>('interface')
+  const [addDialogParentId, setAddDialogParentId] = useState<string | undefined>()
 
   useEffect(() => {
     loadData()
@@ -134,37 +138,52 @@ export default function ModuleTree({ onSelect, selectedId }: Props) {
 
                     return (
                       <div key={iface.id}>
-                        <button
-                          onClick={() => {
-                            toggleInterface(iface.id)
-                            onSelect(iface, 'interface')
-                          }}
-                          className={`w-full flex items-center px-4 py-2 hover:bg-slate-800 text-left ${
-                            isSelected ? 'bg-slate-800 border-l-2 border-blue-500' : ''
-                          }`}
-                        >
-                          {ifaceConnections.length > 0 ? (
-                            isExpanded ? (
-                              <ChevronDown size={14} className="text-gray-400 mr-2" />
+                        <div className="flex items-center group">
+                          <button
+                            onClick={() => {
+                              toggleInterface(iface.id)
+                              onSelect(iface, 'interface')
+                            }}
+                            className={`flex-1 flex items-center px-4 py-2 hover:bg-slate-800 text-left ${
+                              isSelected ? 'bg-slate-800 border-l-2 border-blue-500' : ''
+                            }`}
+                          >
+                            {ifaceConnections.length > 0 ? (
+                              isExpanded ? (
+                                <ChevronDown size={14} className="text-gray-400 mr-2" />
+                              ) : (
+                                <ChevronRight size={14} className="text-gray-400 mr-2" />
+                              )
                             ) : (
-                              <ChevronRight size={14} className="text-gray-400 mr-2" />
-                            )
-                          ) : (
-                            <span className="w-4 mr-2" />
-                          )}
+                              <span className="w-4 mr-2" />
+                            )}
+                            
+                            {iface.enabled ? (
+                              <Wifi size={14} className="text-green-400 mr-2" />
+                            ) : (
+                              <WifiOff size={14} className="text-gray-500 mr-2" />
+                            )}
+                            
+                            <span className={`flex-1 ${iface.enabled ? 'text-white' : 'text-gray-500'}`}>
+                              {iface.name}
+                            </span>
+                            
+                            <span className="text-xs text-gray-500">{ifaceConnections.length}</span>
+                          </button>
                           
-                          {iface.enabled ? (
-                            <Wifi size={14} className="text-green-400 mr-2" />
-                          ) : (
-                            <WifiOff size={14} className="text-gray-500 mr-2" />
-                          )}
-                          
-                          <span className={`flex-1 ${iface.enabled ? 'text-white' : 'text-gray-500'}`}>
-                            {iface.name}
-                          </span>
-                          
-                          <span className="text-xs text-gray-500">{ifaceConnections.length}</span>
-                        </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setAddDialogType('connection')
+                              setAddDialogParentId(iface.id)
+                              setShowAddDialog(true)
+                            }}
+                            className="p-2 opacity-0 group-hover:opacity-100 hover:bg-slate-700 rounded text-blue-400"
+                            title="Add Connection"
+                          >
+                            <Plus size={14} />
+                          </button>
+                        </div>
 
                         {/* Connections */}
                         {isExpanded && ifaceConnections.map(conn => {
@@ -174,37 +193,52 @@ export default function ModuleTree({ onSelect, selectedId }: Props) {
 
                           return (
                             <div key={conn.id} className="ml-4">
-                              <button
-                                onClick={() => {
-                                  toggleConnection(conn.id)
-                                  onSelect(conn, 'connection')
-                                }}
-                                className={`w-full flex items-center px-4 py-2 hover:bg-slate-800 text-left ${
-                                  isConnSelected ? 'bg-slate-800 border-l-2 border-blue-500' : ''
-                                }`}
-                              >
-                                {connChannels.length > 0 ? (
-                                  isConnExpanded ? (
-                                    <ChevronDown size={14} className="text-gray-400 mr-2" />
+                              <div className="flex items-center group">
+                                <button
+                                  onClick={() => {
+                                    toggleConnection(conn.id)
+                                    onSelect(conn, 'connection')
+                                  }}
+                                  className={`flex-1 flex items-center px-4 py-2 hover:bg-slate-800 text-left ${
+                                    isConnSelected ? 'bg-slate-800 border-l-2 border-blue-500' : ''
+                                  }`}
+                                >
+                                  {connChannels.length > 0 ? (
+                                    isConnExpanded ? (
+                                      <ChevronDown size={14} className="text-gray-400 mr-2" />
+                                    ) : (
+                                      <ChevronRight size={14} className="text-gray-400 mr-2" />
+                                    )
                                   ) : (
-                                    <ChevronRight size={14} className="text-gray-400 mr-2" />
-                                  )
-                                ) : (
-                                  <span className="w-4 mr-2" />
-                                )}
+                                    <span className="w-4 mr-2" />
+                                  )}
+                                  
+                                  {conn.enabled ? (
+                                    <Wifi size={14} className="text-green-400 mr-2" />
+                                  ) : (
+                                    <WifiOff size={14} className="text-gray-500 mr-2" />
+                                  )}
+                                  
+                                  <span className={`flex-1 ${conn.enabled ? 'text-white' : 'text-gray-500'}`}>
+                                    {conn.name}
+                                  </span>
+                                  
+                                  <span className="text-xs text-gray-500">{connChannels.length}</span>
+                                </button>
                                 
-                                {conn.enabled ? (
-                                  <Wifi size={14} className="text-green-400 mr-2" />
-                                ) : (
-                                  <WifiOff size={14} className="text-gray-500 mr-2" />
-                                )}
-                                
-                                <span className={`flex-1 ${conn.enabled ? 'text-white' : 'text-gray-500'}`}>
-                                  {conn.name}
-                                </span>
-                                
-                                <span className="text-xs text-gray-500">{connChannels.length}</span>
-                              </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setAddDialogType('channel')
+                                    setAddDialogParentId(conn.id)
+                                    setShowAddDialog(true)
+                                  }}
+                                  className="p-2 opacity-0 group-hover:opacity-100 hover:bg-slate-700 rounded text-blue-400"
+                                  title="Add Channel"
+                                >
+                                  <Plus size={14} />
+                                </button>
+                              </div>
 
                               {/* Channels */}
                               {isConnExpanded && connChannels.map(channel => {
@@ -248,7 +282,11 @@ export default function ModuleTree({ onSelect, selectedId }: Props) {
 
             {/* Add Module Button */}
             <button
-              onClick={() => {/* TODO: Open add interface dialog */}}
+              onClick={() => {
+                setAddDialogType('interface')
+                setAddDialogParentId(undefined)
+                setShowAddDialog(true)
+              }}
               className="w-full flex items-center px-4 py-2 mt-2 hover:bg-slate-800 text-blue-400 text-left"
             >
               <Plus size={16} className="mr-2" />
@@ -276,7 +314,11 @@ export default function ModuleTree({ onSelect, selectedId }: Props) {
         {expandedCategories.has('outputs') && (
           <div className="ml-2">
             <button
-              onClick={() => {/* TODO: Open add output dialog */}}
+              onClick={() => {
+                setAddDialogType('interface')
+                setAddDialogParentId(undefined)
+                setShowAddDialog(true)
+              }}
               className="w-full flex items-center px-4 py-2 mt-2 hover:bg-slate-800 text-blue-400 text-left"
             >
               <Plus size={16} className="mr-2" />
@@ -332,6 +374,19 @@ export default function ModuleTree({ onSelect, selectedId }: Props) {
           <span className="font-semibold text-white">General</span>
         </button>
       </div>
+
+      {/* Add Module Dialog */}
+      {showAddDialog && (
+        <AddModuleDialog
+          type={addDialogType}
+          parentId={addDialogParentId}
+          onClose={() => setShowAddDialog(false)}
+          onSuccess={() => {
+            loadData()
+            setShowAddDialog(false)
+          }}
+        />
+      )}
     </div>
   )
 }
