@@ -50,6 +50,13 @@ export default function Dashboard() {
               {user?.name} ({user?.role})
             </span>
             <button
+              onClick={() => navigate('/analytics')}
+              className="flex items-center space-x-2 px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-md text-sm"
+            >
+              <Settings size={16} />
+              <span>Analytics</span>
+            </button>
+            <button
               onClick={() => navigate('/builder')}
               className="flex items-center space-x-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm"
             >
