@@ -46,6 +46,9 @@ export default function DashboardGrid({ dashboard, editable }: Props) {
       widget,
       editable,
       onRemove: () => removeWidget(widget.id),
+      onConfigChange: (config: any) => {
+        updateWidget(widget.id, { config })
+      },
     }
 
     switch (widget.type) {

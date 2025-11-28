@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Download, Plus, TrendingUp } from 'lucide-react'
+import { ArrowLeft, Download, TrendingUp } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
 import HistoricalViewer from '../components/analytics/HistoricalViewer'
 import DerivedSignalBuilder from '../components/analytics/DerivedSignalBuilder'

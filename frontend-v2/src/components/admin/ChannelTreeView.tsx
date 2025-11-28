@@ -60,7 +60,7 @@ export default function ChannelTreeView() {
   const [expandedConnections, setExpandedConnections] = useState<Set<string>>(new Set())
   const [dialogMode, setDialogMode] = useState<DialogMode>(null)
   const [editItem, setEditItem] = useState<EditItem>(null)
-  const [parentId, setParentId] = useState<string>('')
+  const [_parentId, setParentId] = useState<string>('')
 
   useEffect(() => {
     loadTreeData()
@@ -476,20 +476,22 @@ export default function ChannelTreeView() {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">Protocol</label>
-                  <select
-                    value={editItem.protocol}
-                    onChange={(e) => setEditItem({ ...editItem, protocol: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white text-sm"
-                  >
-                    <option value="modbus">Modbus TCP</option>
-                    <option value="opcua">OPC UA</option>
-                    <option value="mqtt">MQTT</option>
-                    <option value="ethernet-ip">EtherNet/IP (Coming Soon)</option>
-                    <option value="egd">EGD (Coming Soon)</option>
-                  </select>
-                </div>
+                {'protocol' in editItem && (
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">Protocol</label>
+                    <select
+                      value={editItem.protocol}
+                      onChange={(e) => setEditItem({ ...editItem, protocol: e.target.value })}
+                      className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white text-sm"
+                    >
+                      <option value="modbus">Modbus TCP</option>
+                      <option value="opcua">OPC UA</option>
+                      <option value="mqtt">MQTT</option>
+                      <option value="ethernet-ip">EtherNet/IP (Coming Soon)</option>
+                      <option value="egd">EGD (Coming Soon)</option>
+                    </select>
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-sm text-gray-400 mb-1">Status</label>
@@ -504,16 +506,18 @@ export default function ChannelTreeView() {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm text-gray-400 mb-1">Description</label>
-                <textarea
-                  value={editItem.description || ''}
-                  onChange={(e) => setEditItem({ ...editItem, description: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white text-sm"
-                  rows={2}
-                  placeholder="Optional description"
-                />
-              </div>
+              {'description' in editItem && (
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Description</label>
+                  <textarea
+                    value={editItem.description || ''}
+                    onChange={(e) => setEditItem({ ...editItem, description: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white text-sm"
+                    rows={2}
+                    placeholder="Optional description"
+                  />
+                </div>
+              )}
 
               <div>
                 <label className="block text-sm text-gray-400 mb-1">Configuration (JSON)</label>
@@ -600,16 +604,18 @@ export default function ChannelTreeView() {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm text-gray-400 mb-1">Description</label>
-                <textarea
-                  value={editItem.description || ''}
-                  onChange={(e) => setEditItem({ ...editItem, description: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white text-sm"
-                  rows={2}
-                  placeholder="Optional description"
-                />
-              </div>
+              {'description' in editItem && (
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Description</label>
+                  <textarea
+                    value={editItem.description || ''}
+                    onChange={(e) => setEditItem({ ...editItem, description: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white text-sm"
+                    rows={2}
+                    placeholder="Optional description"
+                  />
+                </div>
+              )}
 
               <div>
                 <label className="block text-sm text-gray-400 mb-1">Configuration (JSON)</label>
@@ -629,20 +635,22 @@ export default function ChannelTreeView() {
                 </p>
               </div>
 
-              <div>
-                <label className="block text-sm text-gray-400 mb-1">Metadata (JSON)</label>
-                <textarea
-                  value={JSON.stringify(editItem.metadata || {}, null, 2)}
-                  onChange={(e) => {
-                    try {
-                      setEditItem({ ...editItem, metadata: JSON.parse(e.target.value) })
-                    } catch {}
-                  }}
-                  className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white text-sm font-mono"
-                  rows={4}
-                  placeholder='{"location": "Building A", "manufacturer": "Siemens"}'
-                />
-              </div>
+              {'metadata' in editItem && (
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Metadata (JSON)</label>
+                  <textarea
+                    value={JSON.stringify(editItem.metadata || {}, null, 2)}
+                    onChange={(e) => {
+                      try {
+                        setEditItem({ ...editItem, metadata: JSON.parse(e.target.value) })
+                      } catch {}
+                    }}
+                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white text-sm font-mono"
+                    rows={4}
+                    placeholder='{"location": "Building A", "manufacturer": "Siemens"}'
+                  />
+                </div>
+              )}
             </div>
 
             <div className="flex space-x-2 mt-6">
@@ -701,15 +709,17 @@ export default function ChannelTreeView() {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">Protocol</label>
-                  <input
-                    type="text"
-                    value={editItem.protocol}
-                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-gray-500 text-sm"
-                    disabled
-                  />
-                </div>
+                {'protocol' in editItem && (
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">Protocol</label>
+                    <input
+                      type="text"
+                      value={editItem.protocol}
+                      className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-gray-500 text-sm"
+                      disabled
+                    />
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-sm text-gray-400 mb-1">Status</label>
@@ -742,23 +752,25 @@ export default function ChannelTreeView() {
                 </p>
               </div>
 
-              <div>
-                <label className="block text-sm text-gray-400 mb-1">Metadata (JSON)</label>
-                <textarea
-                  value={JSON.stringify(editItem.metadata || {}, null, 2)}
-                  onChange={(e) => {
-                    try {
-                      setEditItem({ ...editItem, metadata: JSON.parse(e.target.value) })
-                    } catch {}
-                  }}
-                  className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white text-sm font-mono"
-                  rows={6}
-                  placeholder='{"units": "°C", "min": 0, "max": 100, "description": "Reactor temperature"}'
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Engineering units, scaling, limits, descriptions, etc.
-                </p>
-              </div>
+              {'metadata' in editItem && (
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Metadata (JSON)</label>
+                  <textarea
+                    value={JSON.stringify(editItem.metadata || {}, null, 2)}
+                    onChange={(e) => {
+                      try {
+                        setEditItem({ ...editItem, metadata: JSON.parse(e.target.value) })
+                      } catch {}
+                    }}
+                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white text-sm font-mono"
+                    rows={6}
+                    placeholder='{"units": "°C", "min": 0, "max": 100, "description": "Reactor temperature"}'
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Engineering units, scaling, limits, descriptions, etc.
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="flex space-x-2 mt-6">
