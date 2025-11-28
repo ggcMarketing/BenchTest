@@ -1,4 +1,5 @@
 import express from 'express';
+import cors from 'cors';
 import dotenv from 'dotenv';
 import { createLogger } from '../../../shared/utils/logger.js';
 import { getDbPool, closeDbPool } from '../../../shared/utils/db-client.js';
@@ -15,6 +16,7 @@ const PORT = process.env.PORT || 3003;
 const storageManager = new StorageManager();
 
 // Middleware
+app.use(cors());
 app.use(express.json());
 
 // Health check endpoint
