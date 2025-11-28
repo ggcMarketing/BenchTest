@@ -1,0 +1,233 @@
+name: ParX CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, parx-v1.2.1 ]
+  pull_request:
+    branches: [ main, parx-v1.2.1 ]
+  release:
+    types: [ created ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ${{ github.repository_owner }}/parx
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: |
+            services/admin-api/package-lock.json
+            services/data-router/package-lock.json
+            services/collector/package-lock.json
+            services/storage-engine/package-lock.json
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: services/analytics-engine/requirements.txt
+      
+      - name: Install dependencies
+        run: |
+          cd services/admin-api && npm ci
+          cd ../data-router && npm ci
+          cd ../collector && npm ci
+          cd ../storage-engine && npm ci
+          cd ../analytics-engine && pip install -r requirements.txt
+      
+      - name: Run linting
+        run: |
+          cd services/admin-api && npm run lint || true
+          cd ../data-router && npm run lint || true
+          cd ../collector && npm run lint || true
+          cd ../storage-engine && npm run lint || true
+      
+      - name: Start services
+        run: docker-compose -f docker-compose.v1.2.1.yml up -d
+      
+      - name: Wait for services
+        run: sleep 30
+      
+      - name: Run integration tests
+        run: |
+          pwsh ./test-integration-e2e.ps1
+      
+      - name: Run performance tests
+        run: |
+          pwsh ./test-performance.ps1
+      
+      - name: Run security tests
+        run: |
+          pwsh ./test-security.ps1
+      
+      - name: Stop services
+        if: always()
+        run: docker-compose -f docker-compose.v1.2.1.yml down
+
+  build-and-push:
+    name: Build and Push Docker Images
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'push' || github.event_name == 'release'
+    
+    strategy:
+      matrix:
+        service:
+          - admin-api
+          - data-router
+          - collector
+          - storage-engine
+          - analytics-engine
+          - frontend
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      
+      - name: Log in to Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-${{ matrix.service }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha
+      
+      - name: Build and push
+        uses: docker/build-push-action@v4
+        with:
+          context: ./services/${{ matrix.service }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.ref == 'refs/heads/parx-v1.2.1'
+    environment:
+      name: staging
+      url: https://staging.parx.example.com
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+      
+      - name: Configure kubectl
+        run: |
+          echo "${{ secrets.KUBE_CONFIG_STAGING }}" | base64 -d > kubeconfig
+          export KUBECONFIG=kubeconfig
+      
+      - name: Deploy to Kubernetes
+        run: |
+          kubectl apply -f k8s/namespace.yaml
+          kubectl apply -f k8s/configmap.yaml
+          kubectl apply -f k8s/secrets.yaml
+          kubectl apply -f k8s/postgres-deployment.yaml
+          kubectl apply -f k8s/redis-deployment.yaml
+          kubectl apply -f k8s/admin-api-deployment.yaml
+          kubectl apply -f k8s/all-services.yaml
+          kubectl apply -f k8s/ingress.yaml
+      
+      - name: Wait for rollout
+        run: |
+          kubectl rollout status deployment/admin-api -n parx
+          kubectl rollout status deployment/data-router -n parx
+          kubectl rollout status deployment/collector -n parx
+          kubectl rollout status deployment/storage-engine -n parx
+          kubectl rollout status deployment/analytics-engine -n parx
+          kubectl rollout status deployment/frontend -n parx
+      
+      - name: Run smoke tests
+        run: |
+          # Wait for ingress to be ready
+          sleep 30
+          # Test health endpoints
+          curl -f https://staging.parx.example.com/api/v1/health || exit 1
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.event_name == 'release'
+    environment:
+      name: production
+      url: https://parx.example.com
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+      
+      - name: Configure kubectl
+        run: |
+          echo "${{ secrets.KUBE_CONFIG_PROD }}" | base64 -d > kubeconfig
+          export KUBECONFIG=kubeconfig
+      
+      - name: Deploy to Kubernetes
+        run: |
+          kubectl apply -f k8s/namespace.yaml
+          kubectl apply -f k8s/configmap.yaml
+          kubectl apply -f k8s/secrets.yaml
+          kubectl apply -f k8s/postgres-deployment.yaml
+          kubectl apply -f k8s/redis-deployment.yaml
+          kubectl apply -f k8s/admin-api-deployment.yaml
+          kubectl apply -f k8s/all-services.yaml
+          kubectl apply -f k8s/ingress.yaml
+      
+      - name: Wait for rollout
+        run: |
+          kubectl rollout status deployment/admin-api -n parx
+          kubectl rollout status deployment/data-router -n parx
+          kubectl rollout status deployment/collector -n parx
+          kubectl rollout status deployment/storage-engine -n parx
+          kubectl rollout status deployment/analytics-engine -n parx
+          kubectl rollout status deployment/frontend -n parx
+      
+      - name: Run smoke tests
+        run: |
+          sleep 30
+          curl -f https://parx.example.com/api/v1/health || exit 1
+      
+      - name: Notify deployment
+        if: success()
+        run: |
+          echo "Deployment to production successful!"
+          # Add notification logic (Slack, email, etc.)

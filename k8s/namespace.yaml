@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: parx
+  labels:
+    name: parx
+    app: parx-v1.2.1
