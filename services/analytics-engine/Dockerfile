@@ -8,13 +8,13 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements
-COPY requirements.txt .
+COPY ./services/analytics-engine/requirements.txt .
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application files
-COPY . .
+COPY ./services/analytics-engine .
 
 # Create logs directory
 RUN mkdir -p /app/logs

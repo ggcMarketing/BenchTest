@@ -9,6 +9,11 @@ import Admin from './pages/Admin'
 function App() {
   const { isAuthenticated } = useAuthStore()
 
+  // Debug: Check what Vite is loading from .env
+  console.log("ENV DUMP EXACT:", JSON.stringify(import.meta.env, null, 2))
+  console.log("ADMIN URL at runtime:", import.meta.env.VITE_ADMIN_API_URL)
+  console.log("FULL ENV:", import.meta.env)
+
   return (
     <Routes>
       <Route path="/login" element={<Login />} />

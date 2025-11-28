@@ -1,0 +1,16 @@
+**/node_modules
+**/.env
+**/.DS_Store
+**/*.log
+**/npm-debug.log
+.git
+.github
+logs
+frontend
+frontend-v2
+backend
+k8s
+docs
+*.md
+*.sh
+*.ps1

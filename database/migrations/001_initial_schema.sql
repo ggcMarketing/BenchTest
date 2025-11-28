@@ -194,9 +194,9 @@ CREATE TRIGGER update_batches_updated_at BEFORE UPDATE ON batches
 -- Insert default users (passwords are 'pass123' hashed with bcrypt rounds=10)
 -- Hash generated with: bcrypt.hash('pass123', 10)
 INSERT INTO users (username, password_hash, role, name, email) VALUES
-  ('admin', '$2b$10$YQ98PzLGYJY9iB7P0biEUOlJ8JQJ8YQ98PzLGYJY9iB7P0biEUOlJ8', 'admin', 'System Administrator', 'admin@parx.local'),
-  ('engineer1', '$2b$10$YQ98PzLGYJY9iB7P0biEUOlJ8JQJ8YQ98PzLGYJY9iB7P0biEUOlJ8', 'engineer', 'Engineer One', 'engineer1@parx.local'),
-  ('operator1', '$2b$10$YQ98PzLGYJY9iB7P0biEUOlJ8JQJ8YQ98PzLGYJY9iB7P0biEUOlJ8', 'operator', 'Operator One', 'operator1@parx.local');
+  ('admin', '$2b$10$rnE8.8cjm7h/wfojM/XKYu.FH9b4bofnCLNxHPrCvqPoX8IRNpM8.', 'admin', 'System Administrator', 'admin@parx.local'),
+  ('engineer1', '$2b$10$rnE8.8cjm7h/wfojM/XKYu.FH9b4bofnCLNxHPrCvqPoX8IRNpM8.', 'engineer', 'Engineer One', 'engineer1@parx.local'),
+  ('operator1', '$2b$10$rnE8.8cjm7h/wfojM/XKYu.FH9b4bofnCLNxHPrCvqPoX8IRNpM8.', 'operator', 'Operator One', 'operator1@parx.local');
 
 -- Migration complete
 SELECT 'Migration 001_initial_schema completed successfully' AS status;

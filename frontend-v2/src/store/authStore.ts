@@ -2,7 +2,12 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import axios from 'axios'
 
-const API_URL = import.meta.env.VITE_ADMIN_API_URL || 'http://localhost:3000/api/v1'
+// Temporarily hardcoded until we resolve the .env loading issue
+const API_URL = 'http://localhost:3000/api/v1'
+// const API_URL = import.meta.env.VITE_ADMIN_API_URL || 'http://localhost:3000/api/v1'
+
+console.log('Auth Store API_URL:', API_URL)
+console.log('Environment variables:', import.meta.env)
 
 interface User {
   id: number
@@ -30,7 +35,9 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
 
       login: async (username: string, password: string) => {
-        const response = await axios.post(`${API_URL}/auth/login`, {
+        const loginUrl = `${API_URL}/auth/login`
+        console.log('Attempting login to:', loginUrl)
+        const response = await axios.post(loginUrl, {
           username,
           password,
         })

@@ -5,14 +5,24 @@ WORKDIR /app
 # Install build dependencies for native modules
 RUN apk add --no-cache python3 make g++
 
+# Copy shared utilities first
+COPY ./shared /shared
+
+# Install shared dependencies
+WORKDIR /shared
+RUN npm install --omit=dev
+
+# Switch back to app directory
+WORKDIR /app
+
 # Copy package files
-COPY package*.json ./
+COPY ./services/collector/package*.json ./
 
 # Install dependencies
 RUN npm install --omit=dev
 
 # Copy application files
-COPY . .
+COPY ./services/collector .
 
 # Create logs directory
 RUN mkdir -p /app/logs

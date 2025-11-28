@@ -65,8 +65,8 @@ services:
 
   admin-api:
     build:
-      context: ./services/admin-api
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./services/admin-api/Dockerfile
     container_name: parx-admin-api
     environment:
       - NODE_ENV=development
@@ -84,10 +84,6 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./services/admin-api:/app
-      - /app/node_modules
-      - ./shared:/shared
-      - ./shared/node_modules:/shared/node_modules
       - ./logs:/app/logs
     depends_on:
       postgres:
@@ -100,8 +96,8 @@ services:
 
   data-router:
     build:
-      context: ./services/data-router
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./services/data-router/Dockerfile
     container_name: parx-data-router
     environment:
       - NODE_ENV=development
@@ -127,8 +123,8 @@ services:
 
   collector:
     build:
-      context: ./services/collector
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./services/collector/Dockerfile
     container_name: parx-collector
     environment:
       - NODE_ENV=development
@@ -161,8 +157,8 @@ services:
 
   storage-engine:
     build:
-      context: ./services/storage-engine
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./services/storage-engine/Dockerfile
     container_name: parx-storage-engine
     environment:
       - NODE_ENV=development
@@ -201,8 +197,8 @@ services:
 
   analytics-engine:
     build:
-      context: ./services/analytics-engine
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./services/analytics-engine/Dockerfile
     container_name: parx-analytics-engine
     environment:
       - PYTHONUNBUFFERED=1
